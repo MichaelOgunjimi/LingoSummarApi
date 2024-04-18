@@ -9,7 +9,7 @@ db = MongoEngine()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    CORS(app, resources={r"/api/*": {"origins": ["https://www.api.lingosummar.com", "https://lingosummar.netlify.app/", "https://www.lingosummar.com/"]}})
+    CORS(app, resources={r"/api/*": {"origins": ["https://www.lingosummar.com", "https://www.api.lingosummar.com", "https://lingosummar.netlify.app/", "https://www.lingosummar.com/", "https://lingosummar.netlify.app/"]}})
 
     # Initialize extensions
     db.init_app(app)
