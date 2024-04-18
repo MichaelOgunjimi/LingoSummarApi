@@ -1,0 +1,33 @@
+Folder PATH listing
+Volume serial number is 0000028A 829D:CB12
+C:../summarization
+�   clustering.py
+�   feature_extraction.py
+�   fuzzy_logic.py
+�   preprocessing.py
+�   rules.py
+�   textClasses.py
+�   text_summarizer.py
+�   tree.txt
+�   
++---.idea
+�   �   .gitignore
+�   �   misc.xml
+�   �   modules.xml
+�   �   summarizer.iml
+�   �   vcs.xml
+�   �   workspace.xml
+�   �   
+�   +---inspectionProfiles
+�           profiles_settings.xml
+�           Project_Default.xml
+�           
++---resources
+�       bonus_words.txt
+�       input-text.txt
+�       reference-text.txt
+�       stigma_words.txt
+�       
++---utils
+        helpers.py
+        
