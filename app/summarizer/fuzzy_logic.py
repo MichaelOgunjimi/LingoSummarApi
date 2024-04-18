@@ -120,5 +120,5 @@ class FuzzyLogicSummarizer:
         # Joining sentence texts to form the final summary text
         summary_text = ' '.join(sentence.original for sentence in self.summary)
 
-        print("Summary created with {} sentences.".format(len(self.summary)))
+        # print("Summary created with {} sentences.".format(len(self.summary)))
         return summary_text

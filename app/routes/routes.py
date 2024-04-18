@@ -79,7 +79,7 @@ def get_text_by_id(text_id):
         return jsonify({"error": "Text not found"}), 404
 
 
-@bp.route('/texts/user/', methods=['GET'])
+@bp.route('/texts/user', methods=['GET'])
 @cross_origin()
 def get_user_texts_and_summaries():
     """
