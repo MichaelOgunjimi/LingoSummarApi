@@ -9,7 +9,9 @@ db = MongoEngine()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})  # Allow requests from http://localhost:3000
+    CORS(app, resources={r"/api/*": {"origins": ["https://www.api.lingosummar.com", "https://lingosummar.netlify.app/", "https://www.lingosummar.com/"]}})
+
+    # Initialize extensions
     db.init_app(app)
 
     # Optional: Test database connection
