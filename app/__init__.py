@@ -1,7 +1,7 @@
+from config import Config
 from flask import Flask
 from flask_cors import CORS
 from flask_mongoengine import MongoEngine
-from config import Config
 
 # Initialize the database
 db = MongoEngine()
@@ -15,7 +15,8 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Setup CORS with specific origins allowed
-    CORS(app, resources={r"/api/*": {"origins": ["https://www.lingosummar.com", "https://lingosummar.netlify.app"]}})
+    CORS(app, resources={r"/api/*": {
+        "origins": ["https://www.lingosummar.com", "https://lingosummar.netlify.app", "https://lingosummar.com"]}})
 
     # Initialize MongoDB with Flask
     db.init_app(app)
