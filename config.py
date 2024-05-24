@@ -16,7 +16,10 @@ class Config:
 
     # MongoDB settings
     MONGODB_SETTINGS = {
-        'host': os.getenv('MONGODB_URI')
+        'host': os.getenv('MONGODB_URI'),
+        'tls': True,
+        'tlsAllowInvalidCertificates': True  # Only for development, not recommended for production
+
     }
 
     DEBUG = os.getenv('FLASK_DEBUG', False)  # Default to False if not set
