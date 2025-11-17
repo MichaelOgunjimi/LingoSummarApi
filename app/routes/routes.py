@@ -176,7 +176,7 @@ def get_text_summaries(text_id):
         return jsonify({"error": "Text not found"}), 404
 
 
-@bp.route('/upload', methods=['POST'])
+@bp.route('/upload', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def upload_file():
     """

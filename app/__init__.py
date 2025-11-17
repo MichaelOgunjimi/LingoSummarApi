@@ -14,9 +14,24 @@ def create_app(config_class=Config):
     # Load configurations from the config class
     app.config.from_object(config_class)
 
-    # Setup CORS with specific origins allowed
-    CORS(app, resources={r"/api/*": {
-        "origins": ["https://www.lingosummar.com", "https://lingosummar.netlify.app", "https://lingosummar.com"]}})
+    # Setup CORS - allow all origins in development, specific in production
+    if app.config.get('DEBUG', False):
+        # Development: Allow all origins
+        CORS(app, resources={r"/api/*": {
+            "origins": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": False
+        }})
+    else:
+        # Production: Specific origins only
+        CORS(app, resources={r"/api/*": {
+            "origins": [
+                "https://www.lingosummar.com",
+                "https://lingosummar.netlify.app",
+                "https://lingosummar.com"
+            ]
+        }})
 
     # Initialize MongoDB with Flask
     db.init_app(app)
