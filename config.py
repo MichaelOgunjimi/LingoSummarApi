@@ -14,13 +14,8 @@ load_dotenv(dotenv_path)
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
 
-    # MongoDB settings
-    MONGODB_SETTINGS = {
-        'host': os.getenv('MONGODB_URI'),
-        'tls': True,
-        'tlsAllowInvalidCertificates': True  # Only for development, not recommended for production
-
-    }
+    # MongoDB URI for PyMongo
+    MONGODB_URI = os.getenv('MONGODB_URI')
 
     DEBUG = os.getenv('FLASK_DEBUG', False)  # Default to False if not set
     FLASK_ENV = os.getenv('FLASK_ENV', 'production')  # Default to production if not set

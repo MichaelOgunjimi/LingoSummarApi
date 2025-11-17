@@ -33,7 +33,7 @@ def get_all_texts():
     Returns:
         JSON response containing a list of all texts with first 20 characters.
     """
-    texts = Text.objects.all()
+    texts = Text.get_all()
     texts_data = [
         {
             'id': str(text.id),
@@ -122,7 +122,7 @@ def get_texts_summaries():
     Returns:
         JSON response containing a list of texts and their summaries.
     """
-    texts = Text.objects.all()
+    texts = Text.get_all()
 
     texts_data = [
         {
@@ -159,14 +159,14 @@ def get_text_summaries(text_id):
         JSON response containing the text and its summaries.
     """
     text = Text.get_text_with_summaries(text_id)
-    text_summaries = [{
-        'id': str(summary.id),
-        'text': summary.content,
-        'created_at': summary.created_at.isoformat(),
-        'percentage': summary.percentage,
-        'words': summary.words
-    } for summary in text.summaries]
     if text:
+        text_summaries = [{
+            'id': str(summary.id),
+            'text': summary.content,
+            'created_at': summary.created_at.isoformat(),
+            'percentage': summary.percentage,
+            'words': summary.words
+        } for summary in text.summaries]
         return jsonify({
             'id': str(text.id),
             'text': text.content,
