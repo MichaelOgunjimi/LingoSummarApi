@@ -2,8 +2,98 @@ import math
 import random
 import threading
 from functools import reduce
+import re
 
-from nltk.stem.porter import PorterStemmer
+# Simple Porter Stemmer implementation to avoid NLTK dependency (which requires sqlite3)
+class PorterStemmer:
+    """Simplified Porter Stemmer algorithm - sufficient for basic stemming needs"""
+    
+    def stem(self, word):
+        word = word.lower()
+        
+        # Step 1a
+        if word.endswith('sses'):
+            word = word[:-2]
+        elif word.endswith('ies'):
+            word = word[:-2]
+        elif word.endswith('ss'):
+            pass
+        elif word.endswith('s'):
+            word = word[:-1]
+        
+        # Step 1b
+        if word.endswith('eed'):
+            if self._measure(word[:-3]) > 0:
+                word = word[:-1]
+        elif word.endswith('ed'):
+            stem = word[:-2]
+            if self._has_vowel(stem):
+                word = stem
+                word = self._step1b_helper(word)
+        elif word.endswith('ing'):
+            stem = word[:-3]
+            if self._has_vowel(stem):
+                word = stem
+                word = self._step1b_helper(word)
+        
+        # Step 1c
+        if word.endswith('y'):
+            stem = word[:-1]
+            if self._has_vowel(stem):
+                word = stem + 'i'
+        
+        # Step 2-5 simplified (just handle common suffixes)
+        suffixes = [
+            ('ational', 'ate'), ('tional', 'tion'), ('enci', 'ence'),
+            ('anci', 'ance'), ('izer', 'ize'), ('ator', 'ate'),
+            ('alism', 'al'), ('iveness', 'ive'), ('fulness', 'ful'),
+            ('ousness', 'ous'), ('aliti', 'al'), ('iviti', 'ive'),
+            ('biliti', 'ble'), ('icate', 'ic'), ('ative', ''),
+            ('alize', 'al'), ('ment', ''), ('ness', '')
+        ]
+        
+        for suffix, replacement in suffixes:
+            if word.endswith(suffix):
+                stem = word[:-len(suffix)]
+                if self._measure(stem) > 0:
+                    word = stem + replacement
+                    break
+        
+        return word
+    
+    def _has_vowel(self, word):
+        """Check if word contains a vowel"""
+        return bool(re.search('[aeiou]', word))
+    
+    def _measure(self, word):
+        """Measure the number of consonant sequences"""
+        cv_sequence = re.sub('[^aeiou]+', 'C', word)
+        cv_sequence = re.sub('[aeiou]+', 'V', cv_sequence)
+        return cv_sequence.count('VC')
+    
+    def _step1b_helper(self, word):
+        """Helper for step 1b"""
+        if word.endswith('at') or word.endswith('bl') or word.endswith('iz'):
+            word += 'e'
+        elif self._double_consonant(word) and word[-1] not in 'lsz':
+            word = word[:-1]
+        elif self._measure(word) == 1 and self._cvc(word):
+            word += 'e'
+        return word
+    
+    def _double_consonant(self, word):
+        """Check if word ends with double consonant"""
+        if len(word) >= 2:
+            return word[-1] == word[-2] and word[-1] not in 'aeiou'
+        return False
+    
+    def _cvc(self, word):
+        """Check if word ends with consonant-vowel-consonant pattern"""
+        if len(word) >= 3:
+            return (word[-3] not in 'aeiou' and 
+                   word[-2] in 'aeiou' and 
+                   word[-1] not in 'aeiouwxy')
+        return False
 
 
 def calculate_number_of_clusters_based_on_ratio(sentences, percentage):
