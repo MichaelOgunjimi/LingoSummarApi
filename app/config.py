@@ -1,6 +1,6 @@
 import json
 
-from pydantic import field_validator
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,23 +25,25 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ...  # type: ignore[assignment]
 
     # ── CORS ──────────────────────────────────────────────
-    CORS_ORIGINS: list[str] = [
-        "https://lingosummar.michaelogunjimi.com",
-        "http://localhost:3000",
-        "http://localhost:5173",
-    ]
+    # Accepts a JSON array OR comma-separated string:
+    #   CORS_ORIGINS=["https://example.com","http://localhost:3000"]
+    #   CORS_ORIGINS=https://example.com,http://localhost:3000
+    CORS_ORIGINS: str = (
+        "https://lingosummar.michaelogunjimi.com,"
+        "http://localhost:3000,"
+        "http://localhost:5173"
+    )
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: object) -> list[str]:
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("["):
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def cors_origins(self) -> list[str]:
+        v = self.CORS_ORIGINS.strip()
+        if v.startswith("["):
+            try:
                 return json.loads(v)
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return list(v)  # type: ignore[arg-type]
+            except json.JSONDecodeError:
+                pass
+        return [origin.strip() for origin in v.split(",") if origin.strip()]
 
     # ── File uploads ──────────────────────────────────────
     UPLOAD_DIR: str = "./uploads"

@@ -2,7 +2,7 @@
 
 FastAPI backend for LingoSummar — a text summarization service powered by a custom NLP pipeline using fuzzy logic, K-means clustering, and TF-IDF feature extraction.
 
-**Live API:** https://lingosummar-api.fastapicloud.dev/api/v1
+**Live API:** <https://lingosummar-api.fastapicloud.dev/api/v1>
 
 ---
 
@@ -125,7 +125,7 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-API docs available at: http://localhost:8000/docs
+API docs available at: <http://localhost:8000/docs>
 
 ---
 
@@ -155,7 +155,7 @@ pytest
 | `DEBUG` | Enable debug mode | `false` |
 | `SECRET_KEY` | App secret key | — |
 | `DATABASE_URL` | PostgreSQL async connection string | — |
-| `CORS_ORIGINS` | JSON array of allowed origins | `[]` |
+| `CORS_ORIGINS` | JSON array or comma-separated allowed origins | `["https://lingosummar.michaelogunjimi.com", ...]` |
 | `UPLOAD_DIR` | Directory for uploaded files | `./uploads` |
 | `MAX_UPLOAD_SIZE_MB` | Max file upload size | `10` |
 | `DEFAULT_PERCENTAGE` | Default summary compression % | `50` |
