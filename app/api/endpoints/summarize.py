@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 import os
 
@@ -32,9 +33,10 @@ async def summarize_text(body: SummarizeRequest, db: SessionDep, user_uid: UserU
         db, content=body.text, percentage=percentage, user_uid=user_uid,
     )
 
-    # Run summarizer
+    # Run summarizer in a thread executor to avoid blocking the event loop.
     summarizer = TextSummarizer(body.text, percentage=percentage, num_threads=settings.NUM_THREADS)
-    summary_content = summarizer.summarize()
+    loop = asyncio.get_event_loop()
+    summary_content = await loop.run_in_executor(None, summarizer.summarize)
 
     # Save the summary
     summary = await summary_service.create_summary(
@@ -79,9 +81,10 @@ async def upload_and_summarize(
         uploaded_filename=file.filename,
     )
 
-    # Run summarizer
+    # Run summarizer in a thread executor to avoid blocking the event loop.
     summarizer = TextSummarizer(content, percentage=percentage, num_threads=settings.NUM_THREADS)
-    summary_content = summarizer.summarize()
+    loop = asyncio.get_event_loop()
+    summary_content = await loop.run_in_executor(None, summarizer.summarize)
 
     # Save summary
     await summary_service.create_summary(
@@ -97,16 +100,21 @@ async def upload_and_summarize(
     response_model=SummaryResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def summarize_again(text_id: uuid.UUID, db: SessionDep, percentage: int = 50):
+async def summarize_again(text_id: uuid.UUID, db: SessionDep, user_uid: UserUIDDep, percentage: int = 50):
     """Generate a new summary for an existing text at a (possibly different) compression rate."""
     text = await text_service.get_text_by_id(db, text_id)
     if not text:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Text not found")
 
+    # Soft ownership check: reject only when both sides are set and they differ.
+    if text.user_uid and user_uid and user_uid != text.user_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
     percentage = _get_percentage(percentage)
 
     summarizer = TextSummarizer(text.content, percentage=percentage, num_threads=settings.NUM_THREADS)
-    summary_content = summarizer.summarize()
+    loop = asyncio.get_event_loop()
+    summary_content = await loop.run_in_executor(None, summarizer.summarize)
 
     summary = await summary_service.create_summary(
         db, content=summary_content, percentage=percentage, text_id=text.id,

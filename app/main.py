@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -7,16 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.router import api_router
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
     # Startup: ensure uploads directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    print(f"🚀 {settings.APP_NAME} is starting up...")
+    logger.info("%s is starting up...", settings.APP_NAME)
     yield
     # Shutdown
-    print(f"👋 {settings.APP_NAME} is shutting down...")
+    logger.info("%s is shutting down...", settings.APP_NAME)
 
 
 app = FastAPI(

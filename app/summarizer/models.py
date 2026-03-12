@@ -4,7 +4,7 @@
 class Word:
     """Represents a unique word/lemma found in the text."""
 
-    def __init__(self, stem: str, part_of_speech: str, synonym_list: list[str]):
+    def __init__(self, stem: str, part_of_speech: tuple[str, str] | str, synonym_list: list[str]):
         self.stem = stem
         self.abs_frequency = 1
         self.part_of_speech = part_of_speech

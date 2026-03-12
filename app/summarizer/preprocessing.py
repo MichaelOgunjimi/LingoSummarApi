@@ -47,16 +47,23 @@ class Preprocessor:
         words: dict[str, Word] = {}
 
         for sent in self.nlp(body_text).sents:
-            lemmas = [
-                token.lemma_.lower()
+            # Collect (lemma, fine-grained POS tag) pairs, excluding stops and punctuation.
+            lemma_tag_pairs = [
+                (token.lemma_.lower(), token.tag_)
                 for token in sent
                 if not token.is_stop and not token.is_punct
             ]
+            lemmas = [lemma for lemma, _ in lemma_tag_pairs]
+            # Map each lemma to the POS tag of its first occurrence in this sentence.
+            lemma_to_tag: dict[str, str] = {}
+            for lemma, tag in lemma_tag_pairs:
+                lemma_to_tag.setdefault(lemma, tag)
             unique_lemmas = set(lemmas)
 
             for lemma in unique_lemmas:
                 if lemma not in words:
-                    words[lemma] = Word(lemma, sent.text, self.get_synonyms(lemma))
+                    # Store (lemma, pos_tag) tuple so feature_extraction can use [1] to get the tag.
+                    words[lemma] = Word(lemma, (lemma, lemma_to_tag[lemma]), self.get_synonyms(lemma))
                 else:
                     words[lemma].increment_abs_frequency()
 
