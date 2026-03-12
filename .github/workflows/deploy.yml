@@ -1,0 +1,36 @@
+name: Deploy to FastAPI Cloud
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Authenticate FastAPI Cloud
+        run: uv run fastapi cloud login --token ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+
+      - name: Recreate .fastapicloud/cloud.json
+        run: |
+          mkdir -p .fastapicloud
+          echo '{"app_id":"${{ secrets.FASTAPI_CLOUD_APP_ID }}","team_id":"${{ secrets.FASTAPI_CLOUD_TEAM_ID }}"}' > .fastapicloud/cloud.json
+
+      - name: Deploy
+        run: uv run fastapi deploy .

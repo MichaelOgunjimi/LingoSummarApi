@@ -11,12 +11,12 @@ from app.schemas.summary import SummaryResponse
 class SummarizeRequest(BaseModel):
     """POST /summarize body."""
     text: str = Field(min_length=1)
-    percentage: int = Field(default=50, ge=30, le=80)
+    percentage: int | None = Field(default=None, ge=1, le=100)
 
 
 class SummarizeAgainRequest(BaseModel):
     """POST /summarize-again/{text_id} body."""
-    percentage: int = Field(default=50, ge=30, le=80)
+    percentage: int | None = Field(default=None, ge=1, le=100)
 
 
 # ── Responses ─────────────────────────────────────────────

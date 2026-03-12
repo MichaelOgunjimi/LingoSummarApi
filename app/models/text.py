@@ -18,7 +18,7 @@ class Text(SQLModel, table=True):
     content: str
     user_uid: str | None = Field(default=None, index=True)
     uploaded_filename: str | None = None
-    percentage: int = Field(default=50, ge=30, le=80)
+    percentage: int = Field(default=50, ge=1, le=100)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), nullable=False),
