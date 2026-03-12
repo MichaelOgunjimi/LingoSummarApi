@@ -10,29 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
 
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv run fastapi deploy .
+        env:
+          FASTAPI_CLOUD_TOKEN: ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+          FASTAPI_CLOUD_APP_ID: ${{ secrets.FASTAPI_CLOUD_APP_ID }}
 
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Write FastAPI Cloud auth
-        run: |
-          mkdir -p ~/.local/share/fastapi-cli
-          echo '{"access_token":"${{ secrets.FASTAPI_CLOUD_TOKEN }}"}' > ~/.local/share/fastapi-cli/auth.json
-
-      - name: Recreate .fastapicloud/cloud.json
-        run: |
-          mkdir -p .fastapicloud
-          echo '{"app_id":"${{ secrets.FASTAPI_CLOUD_APP_ID }}","team_id":"${{ secrets.FASTAPI_CLOUD_TEAM_ID }}"}' > .fastapicloud/cloud.json
-
-      - name: Deploy
-        run: uv run fastapi deploy .
