@@ -1,0 +1,30 @@
+name: Deploy to FastAPI Cloud
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install FastAPI CLI
+        run: pip install "fastapi-cli[standard]"
+
+      - name: Write FastAPI Cloud auth
+        run: |
+          mkdir -p ~/.fastapi
+          echo '${{ secrets.FASTAPI_CLOUD_AUTH }}' > ~/.fastapi/auth.json
+
+      - name: Deploy to FastAPI Cloud
+        run: fastapi deploy . --no-wait
