@@ -24,8 +24,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Authenticate FastAPI Cloud
-        run: uv run fastapi cloud login --token ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+      - name: Write FastAPI Cloud auth
+        run: |
+          mkdir -p ~/.local/share/fastapi-cli
+          echo '{"access_token":"${{ secrets.FASTAPI_CLOUD_TOKEN }}"}' > ~/.local/share/fastapi-cli/auth.json
 
       - name: Recreate .fastapicloud/cloud.json
         run: |
