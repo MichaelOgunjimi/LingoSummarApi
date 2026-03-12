@@ -1,6 +1,5 @@
 import uuid
 import os
-import random
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, status
 
@@ -15,11 +14,12 @@ from app.utils.file_handler import read_text_from_upload, allowed_file
 router = APIRouter()
 
 
+DEFAULT_PERCENTAGE = 50
+
+
 def _get_percentage(value: int | None) -> int:
-    """Return provided percentage or a random one between 30-80."""
-    if value and 30 <= value <= 80:
-        return value
-    return random.randint(30, 80)
+    """Return provided percentage or the default (50%)."""
+    return value if value is not None else DEFAULT_PERCENTAGE
 
 
 @router.post("/summarize", response_model=TextWithSummaries, status_code=status.HTTP_201_CREATED)
