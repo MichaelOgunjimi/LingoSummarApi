@@ -27,5 +27,10 @@ jobs:
       - name: Authenticate FastAPI Cloud
         run: uv run fastapi cloud login --token ${{ secrets.FASTAPI_CLOUD_TOKEN }}
 
+      - name: Recreate .fastapicloud/cloud.json
+        run: |
+          mkdir -p .fastapicloud
+          echo '{"app_id":"${{ secrets.FASTAPI_CLOUD_APP_ID }}","team_id":"${{ secrets.FASTAPI_CLOUD_TEAM_ID }}"}' > .fastapicloud/cloud.json
+
       - name: Deploy
         run: uv run fastapi deploy .
