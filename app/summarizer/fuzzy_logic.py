@@ -1,124 +1,102 @@
-import numpy
+"""Fuzzy logic ranking system — fuzzification, inference, and defuzzification."""
 
-import app.summarizer.rules as rl
+import numpy as np
+
+from app.summarizer import rules as rl
+from app.summarizer.models import Sentence
 
 
 class FuzzyLogicSummarizer:
-    def __init__(self, sentences, feature_values, clusters, mem_funcs, output_funcs):
+    """Ranks sentences using fuzzy inference rules and selects top ones for the summary."""
+
+    def __init__(
+        self,
+        sentences: list[Sentence],
+        feature_values: list[dict[str, float]],
+        clusters: dict[int, list[int]],
+        mem_funcs: dict,
+        output_funcs: dict,
+    ):
         self.sentences = sentences
         self.feature_values = feature_values
         self.clusters = clusters
-        self.summary = []
+        self.summary: list[Sentence] = []
         self.mem_funcs = mem_funcs
         self.output_funcs = output_funcs
-        # print(self.feature_values)
 
-    def fuzzify_feature(self, val, feature):
-        ret_val = {}
-        for key in self.mem_funcs[feature]:
-            func = self.mem_funcs[feature][key]
-            if val < func['start'] or val > func['end']:
-                res = 0
-            else:
-                if val < func['peak']:
-                    line = self._get_line(func['start'], func['peak'])
-                else:
-                    line = self._get_line(func['end'], func['peak'])
-                res = line['k'] * val + line['n']
-            ret_val[key] = res
-        return ret_val
+    # ── Fuzzification ─────────────────────────────────────
 
-    def _get_line(self, zero, peak):
+    @staticmethod
+    def _get_line(zero: float, peak: float) -> dict[str, float]:
         k = 1 / (peak - zero)
         n = -k * zero
-        return {'k': k, 'n': n}
+        return {"k": k, "n": n}
 
-    def fuzzify_sentence(self, s):
-        ret_val = {}
-        for feature in s:
-            ret_val[feature] = self.fuzzify_feature(s[feature], feature)
-        return ret_val
+    def _fuzzify_feature(self, val: float, feature: str) -> dict[str, float]:
+        result = {}
+        for key, func in self.mem_funcs[feature].items():
+            if val < func["start"] or val > func["end"]:
+                result[key] = 0
+            else:
+                line = self._get_line(
+                    func["start"] if val < func["peak"] else func["end"],
+                    func["peak"],
+                )
+                result[key] = line["k"] * val + line["n"]
+        return result
 
-    def fuzzify_sentences(self):
-        fuzzified = []
-        for sentence in self.feature_values:  # Adjusted to iterate over feature_values
-            fuzzified_sentence = self.fuzzify_sentence(sentence)
-            fuzzified.append(fuzzified_sentence)
-        return fuzzified
+    def _fuzzify_sentence(self, features: dict[str, float]) -> dict:
+        return {f: self._fuzzify_feature(v, f) for f, v in features.items()}
 
-    def _get_max_rules(self, sentence):
-        max_rules = {'I': 0, 'M': 0, 'L': 0}
-        fuzzified_sentence = self.fuzzify_sentence(sentence)
-        rule_results = rl.calculate_all_rules(fuzzified_sentence)
-        for rule_key in rule_results:
-            if max_rules[rule_key[0]] < rule_results[rule_key]:
-                max_rules[rule_key[0]] = rule_results[rule_key]
+    # ── Inference ─────────────────────────────────────────
+
+    def _get_max_rules(self, sentence_features: dict[str, float]) -> dict[str, float]:
+        max_rules = {"I": 0.0, "M": 0.0, "L": 0.0}
+        fuzzified = self._fuzzify_sentence(sentence_features)
+        rule_results = rl.calculate_all_rules(fuzzified)
+        for rule_key, value in rule_results.items():
+            category = rule_key[0]  # I, M, or L
+            if max_rules[category] < value:
+                max_rules[category] = value
         return max_rules
 
-    def _get_output_function_val(self, key, x):
+    # ── Defuzzification (Center of Gravity) ───────────────
+
+    def _output_function_val(self, key: str, x: float) -> float:
         ofun = self.output_funcs[key]
-        if x < ofun['start'] or x > ofun['end']:
+        if x < ofun["start"] or x > ofun["end"]:
             return 0
-        else:
-            if x < ofun['peak']:
-                line = self._get_line(ofun['start'], ofun['peak'])
-            else:
-                line = self._get_line(ofun['end'], ofun['peak'])
-            return line['k'] * x + line['n']
+        line = self._get_line(
+            ofun["start"] if x < ofun["peak"] else ofun["end"],
+            ofun["peak"],
+        )
+        return line["k"] * x + line["n"]
 
-    def _get_output_val(self, x, key, maximum):
-        val = min(maximum, self._get_output_function_val(key, x))
-        return val
+    def _aggregated_value(self, x: float, max_rules: dict[str, float]) -> float:
+        return max(min(max_rules[k], self._output_function_val(k, x)) for k in max_rules)
 
-    def _get_aggregated_value(self, x, max_rules):
-        output_vals = []
-        for key in max_rules:
-            output_val = self._get_output_val(x, key, max_rules[key])
-            output_vals.append(output_val)
-        aggregated_val = max(output_vals)
-        return aggregated_val
-
-    def center_of_gravity(self, max_rules):
+    def _center_of_gravity(self, max_rules: dict[str, float]) -> float:
         dx = 0.01
-        x_vals = numpy.arange(-0.4, 1.4, dx)
-        y_vals = [self._get_aggregated_value(x, max_rules) for x in x_vals]
-        cog = numpy.trapz([y * x for x, y in zip(x_vals, y_vals)], x=x_vals) / numpy.trapz(y_vals, x=x_vals)
-        # print("Center of gravity calculated: {}".format(cog))
-        return cog
+        x_vals = np.arange(-0.4, 1.4, dx)
+        y_vals = np.array([self._aggregated_value(x, max_rules) for x in x_vals])
+        _trapz = getattr(np, "trapezoid", getattr(np, "trapz", None))
+        area = _trapz(y_vals, x=x_vals)
+        if area == 0:
+            return 0
+        return float(_trapz(y_vals * x_vals, x=x_vals) / area)
 
-    def get_fuzzy_rank(self, sentence):
-        max_rules = self._get_max_rules(sentence)
-        cog = self.center_of_gravity(max_rules)
-        # print("Fuzzy rank for sentence: {}".format(cog))
-        return cog
+    # ── Public API ────────────────────────────────────────
+
+    def get_fuzzy_rank(self, sentence_features: dict[str, float]) -> float:
+        return self._center_of_gravity(self._get_max_rules(sentence_features))
 
     def set_fuzzy_ranks(self):
-        for (sen_obj, sentence) in zip(self.sentences, self.feature_values):
-            # print(sen_obj.rank)
-            sen_obj.rank = self.get_fuzzy_rank(sentence)
+        for sent, features in zip(self.sentences, self.feature_values):
+            sent.rank = self.get_fuzzy_rank(features)
 
-    def get_fuzzy_ranks(self):
-        ret_val = []
-        for sentence in self.sentences:
-            ret_val.append((sentence, self.get_fuzzy_rank(sentence)))
-
-        return ret_val
-
-    def summarize(self):
+    def summarize(self) -> str:
         self.set_fuzzy_ranks()
-        ranked_sentences = sorted(self.sentences, key=lambda x: x.rank, reverse=True)
-
-        # Determine how many sentences to include based on the number of clusters
-        num_sentences_to_include = len(self.clusters)
-
-        # Select the top-ranked sentences
-        selected_sentences = ranked_sentences[:num_sentences_to_include]
-
-        # Sort selected sentences by their original position to maintain narrative flow
-        self.summary = sorted(selected_sentences, key=lambda x: x.position)
-
-        # Joining sentence texts to form the final summary text
-        summary_text = ' '.join(sentence.original for sentence in self.summary)
-
-        # print("Summary created with {} sentences.".format(len(self.summary)))
-        return summary_text
+        ranked = sorted(self.sentences, key=lambda s: s.rank, reverse=True)
+        selected = ranked[: len(self.clusters)]
+        self.summary = sorted(selected, key=lambda s: s.position)
+        return " ".join(s.original for s in self.summary)
