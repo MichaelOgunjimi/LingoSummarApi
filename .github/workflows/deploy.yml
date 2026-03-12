@@ -18,13 +18,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install FastAPI CLI
-        run: pip install "fastapi-cli[standard]"
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Write FastAPI Cloud auth
-        run: |
-          mkdir -p ~/.fastapi
-          echo '${{ secrets.FASTAPI_CLOUD_AUTH }}' > ~/.fastapi/auth.json
+      - name: Install dependencies
+        run: uv sync
 
-      - name: Deploy to FastAPI Cloud
-        run: fastapi deploy . --no-wait
+      - name: Authenticate FastAPI Cloud
+        run: uv run fastapi cloud login --token ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+
+      - name: Deploy
+        run: uv run fastapi deploy .
