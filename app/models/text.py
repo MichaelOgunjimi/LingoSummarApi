@@ -25,4 +25,4 @@ class Text(SQLModel, table=True):
     )
 
     # ── Relationship ──────────────────────────────────────
-    summaries: list["Summary"] = Relationship(back_populates="text")
+    summaries: list["Summary"] = Relationship(back_populates="text", cascade_delete=True)

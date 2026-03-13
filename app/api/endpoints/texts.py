@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import SessionDep, RequiredUserUIDDep
+from app.api.deps import SessionDep, RequiredUserUIDDep, UserUIDDep
 from app.schemas.text import TextPreview, TextWithSummaries
 from app.services import text_service
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/texts", response_model=list[TextPreview])
-async def list_texts(db: SessionDep):
+async def list_texts(db: SessionDep, user_uid: UserUIDDep):
     """Get all texts (preview only — no full content)."""
     return await text_service.get_all_texts(db)
 
@@ -31,7 +31,7 @@ async def get_text_with_summaries(text_id: uuid.UUID, db: SessionDep):
 
 
 @router.get("/texts-summaries", response_model=list[TextWithSummaries])
-async def list_all_texts_with_summaries(db: SessionDep):
+async def list_all_texts_with_summaries(db: SessionDep, user_uid: UserUIDDep):
     """Get all texts with all their summaries."""
     return await text_service.get_all_texts_with_summaries(db)
 

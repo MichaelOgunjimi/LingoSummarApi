@@ -4,18 +4,38 @@ import io
 
 import docx
 import fitz  # PyMuPDF
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
+
+from app.config import settings
 
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx"}
+
+# Derived once at import time so the settings value is always respected.
+_MAX_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 
 def allowed_file(filename: str) -> bool:
     return any(filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
 
 
+async def _read_upload_file(file: UploadFile) -> bytes:
+    """Read file bytes while enforcing the configured size limit.
+
+    Reads one byte more than the limit so we can detect oversized uploads
+    without loading the entire file into memory first.
+    """
+    content = await file.read(_MAX_BYTES + 1)
+    if len(content) > _MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB}MB.",
+        )
+    return content
+
+
 async def read_text_from_upload(file: UploadFile) -> str:
     """Read an uploaded file and return its text content."""
-    content = await file.read()
+    content = await _read_upload_file(file)
     filename = (file.filename or "").lower()
 
     if filename.endswith(".txt"):
