@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     #   CORS_ORIGINS=https://example.com,http://localhost:3000
     CORS_ORIGINS: str = (
         "https://lingosummar.michaelogunjimi.com,"
+        "https://lingosummar.netlify.app,"
         "http://localhost:3000,"
         "http://localhost:5173"
     )
