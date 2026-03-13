@@ -24,3 +24,7 @@ Thumbs.db
 
 # Alembic
 alembic/versions/__pycache__/
+
+# Copilot agent/instruction files
+.github/agents/
+.github/instructions/
